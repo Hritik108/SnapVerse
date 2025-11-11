@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// User model to store user information
+
+model User {
+id String @id @default(uuid()) @db.Uuid
+username String @unique
+email String @unique
+passwordHash String @map("password_hash")
+fullName String? @map("full_name")
+bio String?
+profilePictureUrl String? @map("profile_picture_url")
+isVerified Boolean @default(false) @map("is_verified")
+isPrivate Boolean @default(false) @map("is_private")
+createdAt DateTime @default(now()) @map("created_at")
+updatedAt DateTime @updatedAt @map("updated_at")
+
+posts Post[]
+comments Comment[]
+likes Like[]
+followers Follower[] @relation("userFollowers")
+following Follower[] @relation("userFollowing")
+stories Story[]
+sentMessages Message[] @relation("MessageSender")
+receivedMessages Message[] @relation("MessageReceiver")
+notifications Notification[] @relation("NotificationRecipient")
+triggeredNotifications Notification[] @relation("NotificationTriggerer")
+savedPosts    SavedPost[]
+}
+
+// Posts created by users
+model Post {
+  id          String    @id @default(uuid()) @db.Uuid
+  imageUrl    String    @map("image_url")
+  caption     String?
+  location    String?
+  isArchived  Boolean   @default(false) @map("is_archived")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  authorId    String    @map("author_id") @db.Uuid
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  likes       Like[]
+  tags        PostTag[]
+  savedBy     SavedPost[]
+}
+
+// Comments on posts, with support for nested replies
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  postId    String   @map("post_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+}
+
+// Likes on posts
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+}
+
+// Follow relationships between users
+model Follow {
+  id          String   @id @default(uuid()) @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  followerId  String   @map("follower_id") @db.Uuid
+  followingId String   @map("following_id") @db.Uuid
+  
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
+}
+
+// Temporary stories users upload
+model Story {
+  id        String   @id @default(uuid()) @db.Uuid
+  mediaUrl  String   @map("media_url")
+  mediaType String   @map("media_type") // e.g., 'image' or 'video'
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  authorId  String   @map("author_id") @db.Uuid
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views     StoryView[]
+}
+
+// Story views tracking
+model StoryView {
+  id        String   @id @default(uuid()) @db.Uuid
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+  
+  storyId   String   @map("story_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  
+  @@unique([storyId, userId])
+}
+
+// Messages between users
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  senderId   String   @map("sender_id") @db.Uuid
+  receiverId String   @map("receiver_id") @db.Uuid
+  
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+// Notifications for users
+model Notification {
+  id         String   @id @default(uuid()) @db.Uuid
+  type       String   // 'like', 'comment', 'follow', 'mention', etc.
+  content    String?
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  userId     String   @map("user_id") @db.Uuid
+  actorId    String   @map("actor_id") @db.Uuid
+  postId     String?  @map("post_id") @db.Uuid
+  
+  user       User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor      User     @relation("NotificationTriggerer", fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+// Post tags
+model PostTag {
+  id        String   @id @default(uuid()) @db.Uuid
+  tag       String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  postId    String   @map("post_id") @db.Uuid
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@index([tag])
+}
+
+// Users saving posts
+model SavedPost {
+  id        String   @id @default(uuid()) @db.Uuid
+  savedAt   DateTime @default(now()) @map("saved_at")
+  
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+}
