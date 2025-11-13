@@ -12,35 +12,36 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // url = "postgresql://myuser:mysecretpassword@localhost:5432/mydb?schema=public"
+  // url ="postgresql://myuser:mypassword@localhost:5432/mydb?schema=public"
 }
 
 
 // User model to store user information
-
 model User {
-id String @id @default(uuid()) @db.Uuid
-username String @unique
-email String @unique
-passwordHash String @map("password_hash")
-fullName String? @map("full_name")
-bio String?
-profilePictureUrl String? @map("profile_picture_url")
-isVerified Boolean @default(false) @map("is_verified")
-isPrivate Boolean @default(false) @map("is_private")
-createdAt DateTime @default(now()) @map("created_at")
-updatedAt DateTime @updatedAt @map("updated_at")
-
-posts Post[]
-comments Comment[]
-likes Like[]
-followers Follower[] @relation("userFollowers")
-following Follower[] @relation("userFollowing")
-stories Story[]
-sentMessages Message[] @relation("MessageSender")
-receivedMessages Message[] @relation("MessageReceiver")
-notifications Notification[] @relation("NotificationRecipient")
-triggeredNotifications Notification[] @relation("NotificationTriggerer")
-savedPosts    SavedPost[]
+  id            String    @id @default(uuid()) @db.Uuid
+  username      String    @unique
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  fullName      String    @map("full_name")
+  bio           String?
+  profilePicUrl String?   @map("profile_pic_url")
+  isVerified    Boolean   @default(false) @map("is_verified")
+  isPrivate     Boolean   @default(false) @map("is_private")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  followers     Follow[]  @relation("UserFollowers")
+  following     Follow[]  @relation("UserFollowing")
+  stories       Story[]
+  sentMessages  Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  notifications Notification[] @relation("NotificationRecipient")
+  triggeredNotifications Notification[] @relation("NotificationTriggerer")
+  savedPosts    SavedPost[]
 }
 
 // Posts created by users

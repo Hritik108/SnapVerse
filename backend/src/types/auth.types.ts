@@ -5,3 +5,8 @@ export interface RegisterInput {
   password: string;
   fullName: string;
 }
+
+export type LoginInput = {
+  username: string;
+  password: string;
+};
