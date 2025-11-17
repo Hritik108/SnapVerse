@@ -1,5 +1,6 @@
 import express from 'express';
 import routes from './routes/index.js';
+import { errorHandler } from './middleware/error.handler.js';
 
 const app = express();
 const port = 3000;
@@ -18,6 +19,7 @@ app.get('/test', (req: express.Request, res: express.Response) => {
 });
 
 app.use('/api', routes);
+app.use(errorHandler)
 
 
 app.listen(port, () => {

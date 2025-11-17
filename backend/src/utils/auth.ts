@@ -30,8 +30,16 @@ if (!JWT_SECRET) {
 //   return jwt.sign(payload, JWT_SECRET, options);
 // };
 
-export const verifyToken = (token: string): string | JwtPayload => {
-  return jwt.verify(token, JWT_SECRET);
+export const verifyAccessToken = (token: string): string | JwtPayload => {
+  console.log("Verifying token with secret:",ACCESS_TOKEN_SECRET);
+  console.log(jwt.verify(token, ACCESS_TOKEN_SECRET));
+  return jwt.verify(token, ACCESS_TOKEN_SECRET);
+};
+
+export const verifyRefreshToken = (token: string): string | JwtPayload => {
+  console.log("Verifying token with secret:",REFRESH_TOKEN_SECRET);
+  console.log(jwt.verify(token, REFRESH_TOKEN_SECRET));
+  return jwt.verify(token, REFRESH_TOKEN_SECRET);
 };
 
 export const hashPassword = async (password: string): Promise<string> => {
