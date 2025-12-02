@@ -60,7 +60,7 @@ export class AuthService {
     // Logic to login a user
     
     const user = await prisma.user.findUnique({
-      where: { username: input.username },
+      where: { email: input.email },
     });
 
     if (!user) {

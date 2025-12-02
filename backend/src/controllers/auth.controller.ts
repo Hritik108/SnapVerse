@@ -22,6 +22,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
 export const login = async (req:Request,res:Response,next:NextFunction) => {
   try {
+    console.log("Login Request body:", req.body);
     const user  = await authService.loginUser(req.body);
     return res.status(200).json({
       message: 'User logged in successfully',

@@ -1,9 +1,13 @@
 import express from 'express';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/error.handler.js';
+import cors from 'cors';
 
 const app = express();
-const port = 3000;
+const port = 8000;
+
+// enable CORS for all origins (or configure origins)
+app.use(cors());
 
 // Body parsing middleware
 app.use(express.json()); // Parse JSON bodies
